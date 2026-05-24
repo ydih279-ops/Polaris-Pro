@@ -1,7 +1,7 @@
 // Central config. Everything reads from env so the same code runs
 // locally and on Render without edits.
 export const config = {
-  port: process.env.PORT || 5000,
+  port: process.env.PORT || 5001,
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
   nodeEnv: process.env.NODE_ENV || 'development',
