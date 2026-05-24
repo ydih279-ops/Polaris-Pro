@@ -74,10 +74,11 @@ const handlers = {
 
 const server = app.listen(config.port, () => {
   console.log(`[polaris] API running on :${config.port} (${config.nodeEnv})`);
-  // run the worker + scheduler in-process. For scale you'd run the worker as a
-  // separate dyno via `npm run worker`; the code already supports that.
-  startWorker(handlers);
-  startScheduler();
+  // Defer worker start by 5 seconds to let DB come online
+  setTimeout(() => {
+    startWorker(handlers);
+    startScheduler();
+  }, 5000);
 });
 
 process.on('SIGTERM', () => server.close(() => process.exit(0)));
