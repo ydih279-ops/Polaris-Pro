@@ -1,0 +1,27 @@
+{
+  "name": "polaris-pro",
+  "version": "2.0.0",
+  "description": "Polaris — a self-hostable analytics platform: webhook ingestion, cohorts, funnels, anomaly detection, forecasting, alerts, custom metrics, multi-tenant teams, and a public REST API.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "init-db": "node src/scripts/init-db.js",
+    "seed": "node src/scripts/seed.js",
+    "worker": "node src/scripts/worker.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.0.7",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.14",
+    "papaparse": "^5.4.1",
+    "pg": "^8.12.0"
+  }
+}

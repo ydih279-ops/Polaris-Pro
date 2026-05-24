@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polaris — analytics platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Space+Mono:wght@400;700&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:#0a0e1a; --ink-2:#111726; --ink-3:#18202f; --line:#232c40; --line-2:#2f3a52;
+    --text:#e7ecf5; --muted:#8a96ad; --muted-2:#5d6883; --gold:#f5b942; --gold-dim:#c4923010;
+    --cyan:#4fd6c4; --rose:#ff6b81; --violet:#9d8cff; --green:#5ad19a; --radius:14px;
+    --shadow:0 20px 60px -20px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(900px 500px at 85% -10%, #1a2238 0%, transparent 60%),
+      radial-gradient(700px 500px at 0% 110%, #15203a 0%, transparent 55%), var(--ink);
+    color:var(--text); font-family:'Spline Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  .mono{font-family:'Space Mono',monospace}
+  .label{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+  #auth{position:fixed;inset:0;display:grid;place-items:center;z-index:50}
+  .auth-card{width:380px;background:linear-gradient(180deg,var(--ink-2),var(--ink-3));border:1px solid var(--line);border-radius:18px;padding:38px 34px;box-shadow:var(--shadow);animation:rise .6s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:28px}
+  .star{width:30px;height:30px;position:relative;flex:none}
+  .star::before,.star::after{content:'';position:absolute;inset:0;background:var(--gold);clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+  .star::after{filter:blur(7px);opacity:.55}
+  .brand h1{font-family:'Fraunces',serif;font-weight:900;font-size:26px;letter-spacing:-.02em}
+  .brand h1 span{color:var(--gold)}
+  .auth-card h2{font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin-bottom:4px}
+  .auth-card p.sub{color:var(--muted);font-size:13.5px;margin-bottom:24px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .field input{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);padding:11px 13px;border-radius:10px;font-size:14px;transition:border-color .15s}
+  .field input:focus{outline:none;border-color:var(--gold)}
+  .btn{width:100%;background:var(--gold);color:#1a1407;border:none;padding:12px;border-radius:10px;font-weight:600;font-size:14px;transition:transform .1s,filter .15s}
+  .btn:hover{filter:brightness(1.06)} .btn:active{transform:translateY(1px)}
+  .auth-toggle{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
+  .auth-toggle a{color:var(--gold);cursor:pointer;text-decoration:none}
+  .err{color:var(--rose);font-size:12.5px;margin-top:10px;min-height:16px}
+  .demo-hint{margin-top:16px;padding:10px 12px;background:var(--gold-dim);border:1px solid #3a3115;border-radius:9px;font-size:12px;color:var(--muted)}
+  .demo-hint b{color:var(--gold)}
+  #app{display:none;height:100vh;grid-template-columns:232px 1fr}
+  aside{background:var(--ink-2);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
+  aside .brand{margin:6px 8px 26px}
+  aside .brand h1{font-size:21px} aside .star{width:24px;height:24px}
+  nav{display:flex;flex-direction:column;gap:2px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;color:var(--muted);font-size:14px;font-weight:500;background:none;border:none;text-align:left;width:100%;transition:background .12s,color .12s}
+  .nav-item:hover{background:var(--ink-3);color:var(--text)}
+  .nav-item.active{background:var(--ink-3);color:var(--gold)}
+  .nav-item svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+  .nav-sep{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);padding:16px 11px 6px;font-family:'Space Mono',monospace}
+  aside .foot{margin-top:auto;padding:12px 8px 4px;border-top:1px solid var(--line)}
+  .who{font-size:12.5px;color:var(--muted)} .who b{color:var(--text);display:block;font-size:13px}
+  .role-chip{display:inline-block;margin-top:5px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);border:1px solid #1f3b3a;background:#0e1f1e;padding:2px 7px;border-radius:20px}
+  main{overflow-y:auto;padding:0;position:relative}
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;padding:16px 30px;background:rgba(10,14,26,.78);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .topbar h2{font-family:'Fraunces',serif;font-weight:600;font-size:21px;letter-spacing:-.01em}
+  .topbar .spacer{flex:1}
+  .cmdk-hint{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:6px 10px;border-radius:8px}
+  .cmdk-hint kbd{font-family:'Space Mono',monospace;color:var(--gold)}
+  .ds-select{background:var(--ink-3);border:1px solid var(--line);color:var(--text);padding:8px 11px;border-radius:9px;font-size:13px}
+  .view{padding:26px 30px 60px;max-width:1180px}
+  .grid{display:grid;gap:16px}
+  .cards{grid-template-columns:repeat(4,1fr);margin-bottom:8px}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  .stat .label{margin-bottom:9px}
+  .stat .val{font-family:'Fraunces',serif;font-weight:600;font-size:30px;letter-spacing:-.02em}
+  .stat .delta{font-size:12.5px;margin-top:5px;font-family:'Space Mono',monospace}
+  .delta.up{color:var(--green)} .delta.down{color:var(--rose)}
+  .panel{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+  .panel-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .panel-head .label{flex:1}
+  .chart-wrap{width:100%;overflow:hidden}
+  svg.chart{width:100%;display:block}
+  .legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+  .legend span{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .insights{display:flex;flex-direction:column;gap:10px}
+  .insight{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:var(--text);line-height:1.45}
+  .insight .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:6px;flex:none;box-shadow:0 0 10px var(--gold)}
+  .funnel-row{margin-bottom:12px}
+  .funnel-row .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .funnel-row .top .pct{font-family:'Space Mono',monospace;color:var(--muted)}
+  .funnel-bar{height:30px;background:var(--ink);border-radius:8px;overflow:hidden;position:relative}
+  .funnel-fill{height:100%;background:linear-gradient(90deg,var(--gold),#e89a2a);border-radius:8px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .drop{font-size:11px;color:var(--rose);font-family:'Space Mono',monospace;margin-top:3px}
+  table.cohort{border-collapse:separate;border-spacing:3px;width:100%}
+  table.cohort th{font-size:11px;color:var(--muted-2);font-weight:500;font-family:'Space Mono',monospace;padding:4px}
+  table.cohort td{text-align:center;padding:9px 4px;border-radius:6px;font-size:12px;font-family:'Space Mono',monospace;color:#0a0e1a;font-weight:700}
+  table.cohort td.empty{background:var(--ink);color:var(--muted-2);font-weight:400}
+  table.cohort td.head{background:var(--ink-3);color:var(--muted);font-weight:400;text-align:left;padding-left:10px;white-space:nowrap}
+  .row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .row:last-child{border-bottom:none} .row .grow{flex:1} .row .sub{color:var(--muted);font-size:12px}
+  .pill{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;font-family:'Space Mono',monospace}
+  .pill.on{background:#0e2419;color:var(--green);border:1px solid #1d3d2c}
+  .pill.off{background:#2a1116;color:var(--rose);border:1px solid #432027}
+  .mini{background:var(--ink-3);border:1px solid var(--line);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12.5px}
+  .mini:hover{border-color:var(--line-2)} .mini.danger{color:var(--rose)}
+  .mini.gold{background:var(--gold);color:#1a1407;border:none;font-weight:600}
+  .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+  .empty-state{text-align:center;color:var(--muted);padding:50px 20px;font-size:14px}
+  .code{font-family:'Space Mono',monospace;font-size:12px;background:var(--ink);border:1px solid var(--line);padding:10px 12px;border-radius:8px;color:var(--cyan);word-break:break-all}
+  .qb{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:10px;align-items:end;margin-bottom:16px}
+  .qb .field label{font-size:10px}
+  .qb select,.qb input{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:8px;font-size:13px}
+  .qb-cost{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);margin-top:4px}
+  #cmdk{position:fixed;inset:0;background:rgba(5,8,15,.6);backdrop-filter:blur(4px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding-top:14vh}
+  #cmdk.open{display:flex}
+  .cmdk-box{width:540px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;animation:rise .25s ease}
+  .cmdk-box input{width:100%;background:none;border:none;color:var(--text);padding:18px 20px;font-size:16px;border-bottom:1px solid var(--line)}
+  .cmdk-box input:focus{outline:none}
+  .cmdk-list{max-height:320px;overflow-y:auto;padding:8px}
+  .cmdk-opt{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:9px;font-size:14px;color:var(--muted)}
+  .cmdk-opt.sel{background:var(--ink-3);color:var(--text)}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink-3);border:1px solid var(--line-2);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13.5px;z-index:200;transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow)}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  .spinner{width:16px;height:16px;border:2px solid var(--line-2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .modal-bg{position:fixed;inset:0;background:rgba(5,8,15,.65);backdrop-filter:blur(4px);z-index:90;display:none;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{width:440px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:26px;box-shadow:var(--shadow);animation:rise .3s ease}
+  .modal h3{font-family:'Fraunces',serif;font-size:19px;margin-bottom:16px}
+  .modal .field{margin-bottom:12px}
+  .modal .field input,.modal .field select{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:9px;font-size:13.5px}
+</style>
+</head>
+<body>
+<div id="auth">
+  <div class="auth-card">
+    <div class="brand"><div class="star"></div><h1>Pol<span>a</span>ris</h1></div>
+    <h2 id="authTitle">Welcome back</h2>
+    <p class="sub" id="authSub">Sign in to your analytics workspace.</p>
+    <div class="field" id="nameField" style="display:none"><label>Name</label><input id="iName" placeholder="Ada Lovelace" /></div>
+    <div class="field"><label>Email</label><input id="iEmail" type="email" placeholder="you@company.com" /></div>
+    <div class="field"><label>Password</label><input id="iPass" type="password" placeholder="********" /></div>
+    <button class="btn" id="authBtn">Sign in</button>
+    <div class="err" id="authErr"></div>
+    <div class="auth-toggle" id="authToggle">No account? <a id="toggleLink">Create one</a></div>
+    <div class="demo-hint">Demo: <b>demo@polaris.app</b> / <b>demo123</b></div>
+  </div>
+</div>
+<div id="app">
+  <aside>
+    <div class="brand"><div class="star"></div><h1>Pol<span>a</span>ris</h1></div>
+    <nav id="nav"></nav>
+    <div class="foot">
+      <div class="who"><b id="whoName">-</b><span id="whoEmail">-</span><br><span class="role-chip" id="whoRole">-</span></div>
+      <button class="nav-item" style="margin-top:10px" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>Sign out</button>
+    </div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <h2 id="viewTitle">Overview</h2>
+      <div class="spacer"></div>
+      <select class="ds-select" id="dsSelect"></select>
+      <div class="cmdk-hint">Press <kbd>Cmd K</kbd></div>
+    </div>
+    <div class="view" id="view"></div>
+  </main>
+</div>
+<div id="cmdk"><div class="cmdk-box">
+  <input id="cmdkInput" placeholder="Jump to...  (try cohorts, forecast, webhook)" />
+  <div class="cmdk-list" id="cmdkList"></div>
+</div></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+<script>
+// ============================================================
+//  Polaris frontend — vanilla JS, hand-rolled SVG charts.
+// ============================================================
+const state = { token: localStorage.getItem('polaris_token'), user:null, orgs:[], orgId:null, datasets:[], dsId:null, view:'overview', role:'viewer' };
+const $ = (s,r=document)=>r.querySelector(s);
+const el = (t,p={})=>{const e=document.createElement(t);Object.assign(e,p);if(p.class)e.className=p.class;return e;};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function headers(x={}){const h={'Content-Type':'application/json',...x};if(state.token)h.Authorization='Bearer '+state.token;if(state.orgId)h['X-Org-Id']=state.orgId;return h;}
+async function api(path,opts={}){const res=await fetch(path,{...opts,headers:headers(opts.headers)});const d=await res.json().catch(()=>({}));if(!res.ok)throw new Error(d.error||'request failed');return d;}
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---- AUTH ----
+let mode='login';
+function toggleMode(){
+  mode = mode==='login'?'signup':'login';
+  $('#authTitle').textContent = mode==='login'?'Welcome back':'Create your workspace';
+  $('#authSub').textContent = mode==='login'?'Sign in to your analytics workspace.':'Spin up a free workspace in seconds.';
+  $('#authBtn').textContent = mode==='login'?'Sign in':'Create account';
+  $('#nameField').style.display = mode==='signup'?'block':'none';
+  $('#authToggle').innerHTML = mode==='login' ? "No account? <a id='toggleLink'>Create one</a>" : "Have an account? <a id='toggleLink'>Sign in</a>";
+  bindToggle();
+}
+function bindToggle(){const l=$('#toggleLink');if(l)l.onclick=toggleMode;}
+bindToggle();
+$('#authBtn').onclick = async () => {
+  $('#authErr').textContent='';
+  const email=$('#iEmail').value.trim(), password=$('#iPass').value, name=$('#iName').value.trim();
+  if(!email||!password){$('#authErr').textContent='Email and password required.';return;}
+  try{
+    const path = mode==='login'?'/auth/login':'/auth/signup';
+    const body = mode==='login'?{email,password}:{email,password,name};
+    const data = await api(path,{method:'POST',body:JSON.stringify(body)});
+    state.token=data.token; localStorage.setItem('polaris_token',data.token);
+    await boot();
+  }catch(e){$('#authErr').textContent=e.message;}
+};
+['#iEmail','#iPass','#iName'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')$('#authBtn').click();}));
+$('#logoutBtn').onclick=()=>{localStorage.removeItem('polaris_token');location.reload();};
+
+// ---- BOOT ----
+async function boot(){
+  try{
+    const me = await api('/auth/me');
+    state.user=me.user; state.orgs=me.orgs; state.orgId=me.currentOrg||me.orgs[0]?.id;
+    state.role=me.orgs.find(o=>o.id==state.orgId)?.role||'viewer';
+    $('#auth').style.display='none'; $('#app').style.display='grid';
+    $('#whoName').textContent=me.orgs[0]?.name||'Workspace';
+    $('#whoEmail').textContent=me.user.email;
+    $('#whoRole').textContent=state.role;
+    await loadDatasets(); renderNav(); go('overview');
+  }catch(e){localStorage.removeItem('polaris_token');$('#auth').style.display='grid';$('#app').style.display='none';}
+}
+async function loadDatasets(){
+  const {datasets}=await api('/datasets');
+  state.datasets=datasets; state.dsId=datasets[0]?.id||null;
+  const sel=$('#dsSelect'); sel.innerHTML='';
+  datasets.forEach(d=>{const o=el('option',{value:d.id,textContent:`${d.name} - ${(+d.event_count).toLocaleString()} events`});sel.append(o);});
+  sel.onchange=()=>{state.dsId=sel.value;go(state.view);};
+}
+
+// ---- NAV ----
+const NAV=[
+  {sec:'Analyze'},
+  {id:'overview',label:'Overview',icon:'<path d="M3 3v18h18"/><path d="M7 14l3-4 3 2 4-6"/>'},
+  {id:'cohorts',label:'Retention',icon:'<path d="M4 4h16v4H4z"/><path d="M4 10h10v4H4z"/><path d="M4 16h6v4H4z"/>'},
+  {id:'funnel',label:'Funnel',icon:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>'},
+  {id:'forecast',label:'Forecast',icon:'<path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/>'},
+  {id:'builder',label:'Query builder',icon:'<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>'},
+  {sec:'Automate'},
+  {id:'webhooks',label:'Webhooks',icon:'<circle cx="12" cy="12" r="3"/><path d="M12 9V3"/><path d="M5 12H3"/><path d="M21 12h-2"/>'},
+  {id:'alerts',label:'Alerts',icon:'<path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/>'},
+  {sec:'Admin'},
+  {id:'team',label:'Team',icon:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+  {id:'api',label:'API & keys',icon:'<path d="M21 2l-2 2"/><path d="M11.4 11.6a5 5 0 11-7 7 5 5 0 017-7z"/><path d="M15 7l3 3"/>'},
+];
+function renderNav(){
+  const nav=$('#nav'); nav.innerHTML='';
+  NAV.forEach(n=>{
+    if(n.sec){nav.append(el('div',{class:'nav-sep',textContent:n.sec}));return;}
+    const b=el('button',{class:'nav-item'+(state.view===n.id?' active':'')});
+    b.onclick=()=>go(n.id);
+    b.innerHTML=`<svg viewBox="0 0 24 24">${n.icon}</svg>${n.label}`;
+    nav.append(b);
+  });
+}
+function go(view){
+  state.view=view; renderNav();
+  $('#viewTitle').textContent=(NAV.find(n=>n.id===view)||{}).label||'Overview';
+  const v=$('#view'); v.innerHTML='<div style="padding:60px;text-align:center"><span class="spinner"></span></div>';
+  (RENDER[view]||RENDER.overview)(v);
+}
+
+// ---- shared bits ----
+function statCard(label,val,delta=null,force=null){
+  let d='';
+  if(delta!=null){const up=delta>=0;d=`<div class="delta ${up?'up':'down'}">${up?'+':''}${delta.toFixed(1)}% vs prior 7d</div>`;}
+  else if(force){d=`<div class="delta ${force}">needs attention</div>`;}
+  return `<div class="card stat"><div class="label">${label}</div><div class="val">${val}</div>${d}</div>`;
+}
+const emptyDs=()=>`<div class="panel"><div class="empty-state">No dataset yet. Create one and upload a CSV to begin.<br><br><button class="mini gold" onclick="newDatasetModal()">+ New dataset</button></div></div>`;
+const errBox=e=>`<div class="panel"><div class="empty-state" style="color:var(--rose)">${esc(e.message)}</div></div>`;
+
+// ---- SVG line chart: history + forecast band + anomaly markers ----
+function lineChart({history,forecast=[],band=[],anomalies=[]}){
+  const W=1080,H=300,pad={l:44,r:20,t:16,b:24};
+  const all=history.concat(forecast);
+  const max=Math.max(...all,1)*1.12, min=Math.min(...all,0);
+  const n=all.length||1;
+  const x=i=>pad.l+(n>1?i/(n-1):0)*(W-pad.l-pad.r);
+  const y=val=>pad.t+(1-(val-min)/((max-min)||1))*(H-pad.t-pad.b);
+  const hl=history.length;
+  let bandPath='';
+  if(band.length){
+    const up=band.map((b,i)=>`${x(hl+i)},${y(b.hi)}`);
+    const lo=band.map((b,i)=>`${x(hl+i)},${y(b.lo)}`).reverse();
+    bandPath=`<path d="M${[`${x(hl-1)},${y(history[hl-1])}`,...up,...lo].join(' L')} Z" fill="rgba(157,140,255,.13)"/>`;
+  }
+  const histLine=history.map((v,i)=>`${i?'L':'M'}${x(i)},${y(v)}`).join(' ');
+  const fcLine=forecast.length?`M${x(hl-1)},${y(history[hl-1])} `+forecast.map((v,i)=>`L${x(hl+i)},${y(v)}`).join(' '):'';
+  const grid=[0,.25,.5,.75,1].map(f=>{const val=min+(max-min)*f;return `<line x1="${pad.l}" x2="${W-pad.r}" y1="${y(val)}" y2="${y(val)}" stroke="var(--line)"/><text x="${pad.l-8}" y="${y(val)+4}" fill="var(--muted-2)" font-size="11" text-anchor="end" font-family="Space Mono">${Math.round(val)}</text>`;}).join('');
+  const dots=anomalies.map((a,i)=>a.anomaly?`<circle cx="${x(i)}" cy="${y(history[i])}" r="5" fill="none" stroke="var(--rose)" stroke-width="2"/><circle cx="${x(i)}" cy="${y(history[i])}" r="2.5" fill="var(--rose)"/>`:'').join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${grid}${bandPath}<path d="${histLine}" fill="none" stroke="var(--gold)" stroke-width="2.4" stroke-linejoin="round"/>${fcLine?`<path d="${fcLine}" fill="none" stroke="var(--violet)" stroke-width="2.2" stroke-dasharray="5 5"/>`:''}${dots}</svg>`;
+}
+
+// ============ RENDERERS ============
+const RENDER={};
+
+RENDER.overview = async (v) => {
+  if(!state.dsId) return v.innerHTML=emptyDs();
+  try{
+    const [{history,forecast,band},anom,ins]=await Promise.all([
+      api(`/analytics/forecast?datasetId=${state.dsId}&event=pageview&horizon=14`),
+      api(`/analytics/anomalies?datasetId=${state.dsId}&event=pageview`),
+      api(`/analytics/insights?datasetId=${state.dsId}&event=pageview`),
+    ]);
+    const counts=history.map(h=>h.n);
+    const total=counts.reduce((a,b)=>a+b,0);
+    const last7=counts.slice(-7).reduce((a,b)=>a+b,0), prev7=counts.slice(-14,-7).reduce((a,b)=>a+b,0);
+    const delta=prev7?((last7-prev7)/prev7*100):0;
+    const peak=Math.max(...counts,0);
+    const anomCount=anom.points.filter(p=>p.anomaly).length;
+    window._exportData=anom.points;
+    v.innerHTML=`
+      <div class="grid cards">
+        ${statCard('Total events (90d)',total.toLocaleString())}
+        ${statCard('Last 7 days',last7.toLocaleString(),delta)}
+        ${statCard('Peak day',peak.toLocaleString())}
+        ${statCard('Anomalies',anomCount,null,anomCount?'down':null)}
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><span class="label">// Daily volume - 14-day forecast</span>
+          <button class="mini" onclick="exportPNG()">Export PNG</button>
+          <button class="mini" onclick="exportCSV()">Export CSV</button>
+        </div>
+        <div class="chart-wrap" id="mainChart">${lineChart({history:counts,forecast,band,anomalies:anom.points})}</div>
+        <div class="legend">
+          <span><i style="background:var(--gold)"></i>Observed</span>
+          <span><i style="background:var(--violet)"></i>Forecast (Holt's linear)</span>
+          <span><i style="background:var(--violet);opacity:.4"></i>95% band</span>
+          <span><i style="background:var(--rose)"></i>Anomaly</span>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><span class="label">// Auto-generated insights</span></div>
+        <div class="insights">${ins.insights.map(t=>`<div class="insight"><span class="dot"></span><span>${esc(t)}</span></div>`).join('')}</div>
+      </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+
+RENDER.forecast = async (v) => {
+  if(!state.dsId) return v.innerHTML=emptyDs();
+  try{
+    const {history,forecast,band}=await api(`/analytics/forecast?datasetId=${state.dsId}&event=pageview&horizon=21`);
+    const counts=history.map(h=>h.n);
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// 21-day projection - double exponential smoothing</span></div>
+      <div class="chart-wrap">${lineChart({history:counts,forecast,band})}</div>
+      <div class="legend">
+        <span><i style="background:var(--gold)"></i>History</span>
+        <span><i style="background:var(--violet)"></i>Projected</span>
+        <span><i style="background:var(--violet);opacity:.4"></i>Confidence band</span>
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:16px;line-height:1.5">Holt's linear-trend method (level + trend smoothing). The band widens with horizon as plus/minus 1.96 sigma root-h from in-sample residuals, because uncertainty compounds the further out you project.</p>
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+
+RENDER.cohorts = async (v) => {
+  if(!state.dsId) return v.innerHTML=emptyDs();
+  try{
+    const {cohorts}=await api(`/analytics/cohorts?datasetId=${state.dsId}&weeks=8`);
+    if(!cohorts.length) return v.innerHTML=`<div class="panel"><div class="empty-state">No cohort data yet. Cohorts need events with subject IDs across multiple weeks.</div></div>`;
+    const weeks=Math.max(...cohorts.map(c=>c.retention.length));
+    const heat=r=>{if(r<=0)return 'var(--ink)';const t=Math.min(1,r);return `rgb(${Math.round(245-t*120)},${Math.round(185-t*30)},${Math.round(66+t*40)})`;};
+    const head='<th class="head">Cohort</th><th>Users</th>'+Array.from({length:weeks},(_,i)=>`<th>W${i}</th>`).join('');
+    const body=cohorts.map(c=>`<tr><td class="head">${c.cohort.slice(0,10)}</td><td class="empty">${c.size}</td>`+
+      c.retention.slice(0,weeks).map(r=>r>0?`<td style="background:${heat(r)}">${(r*100).toFixed(0)}</td>`:`<td class="empty">.</td>`).join('')+'</tr>').join('');
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// Weekly retention by signup cohort (% returning)</span></div>
+      <div style="overflow-x:auto"><table class="cohort"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <p style="color:var(--muted);font-size:13px;margin-top:14px">Each row is the users who first appeared that week. Columns track the share still active N weeks later. Warmer cells = stickier cohorts.</p>
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+
+RENDER.funnel = async (v) => {
+  if(!state.dsId) return v.innerHTML=emptyDs();
+  const steps=['signup','activate','purchase','refer'];
+  try{
+    const {funnel}=await api('/analytics/funnel',{method:'POST',body:JSON.stringify({datasetId:state.dsId,steps})});
+    const max=funnel[0]?.count||1;
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// Conversion funnel - signup to activate to purchase to refer</span></div>
+      ${funnel.map((f,i)=>`
+        <div class="funnel-row">
+          <div class="top"><b>${esc(f.step)}</b><span class="pct">${f.count.toLocaleString()} - ${(f.rateFromStart*100).toFixed(1)}% of start</span></div>
+          <div class="funnel-bar"><div class="funnel-fill" style="width:${(f.count/max*100)}%"></div></div>
+          ${i>0?`<div class="drop">drop ${((1-f.rateFromPrev)*100).toFixed(1)}% from ${esc(funnel[i-1].step)}</div>`:''}
+        </div>`).join('')}
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+
+RENDER.builder = async (v) => {
+  if(!state.dsId) return v.innerHTML=emptyDs();
+  v.innerHTML=`<div class="panel">
+    <div class="panel-head"><span class="label">// Visual query builder - composes a safe metric spec, never raw SQL</span></div>
+    <div class="qb">
+      <div class="field"><label>Event</label><select id="qbEvent"><option>pageview</option><option>signup</option><option>activate</option><option>purchase</option><option>refer</option></select></div>
+      <div class="field"><label>Aggregate</label><select id="qbAgg"><option value="count">count</option><option value="sum">sum(value)</option><option value="avg">avg(value)</option><option value="max">max(value)</option></select></div>
+      <div class="field"><label>Group by</label><select id="qbGroup"><option value="">none</option><option>plan</option><option>country</option></select></div>
+      <div class="field"><label>Window</label><select id="qbWindow"><option value="">all time</option><option value="24h">24h</option><option value="7d">7d</option><option value="30d">30d</option></select></div>
+      <button class="mini gold" onclick="runBuilder()" style="height:37px">Run</button>
+    </div>
+    <div id="qbOut"></div>
+  </div>`;
+};
+window.runBuilder = async () => {
+  const spec={event:$('#qbEvent').value,agg:$('#qbAgg').value,groupBy:$('#qbGroup').value||undefined,window:$('#qbWindow').value||undefined,filters:[]};
+  $('#qbOut').innerHTML='<span class="spinner"></span>';
+  try{
+    const {result,estimatedCost}=await api('/metrics/run',{method:'POST',body:JSON.stringify({datasetId:state.dsId,spec})});
+    const cost=`<div class="qb-cost">Estimated query cost: ${estimatedCost!=null?estimatedCost.toFixed(1):'n/a'} (from EXPLAIN)</div>`;
+    if(spec.groupBy){
+      const max=Math.max(...result.map(r=>+r.value),1);
+      $('#qbOut').innerHTML=cost+'<div style="margin-top:12px">'+result.map(r=>`<div class="funnel-row"><div class="top"><b>${esc(r.bucket||'(null)')}</b><span class="pct">${(+r.value).toLocaleString()}</span></div><div class="funnel-bar"><div class="funnel-fill" style="width:${(+r.value/max*100)}%"></div></div></div>`).join('')+'</div>';
+    } else {
+      const val=result[0]?.value??0;
+      $('#qbOut').innerHTML=`<div class="qb-result" style="font-family:'Fraunces',serif;font-size:34px;font-weight:600">${(+val).toLocaleString()}</div>${cost}`;
+    }
+  }catch(e){$('#qbOut').innerHTML=errBox(e);}
+};
+
+RENDER.webhooks = async (v) => {
+  try{
+    const {webhooks}=await api('/webhooks');
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// Inbound webhooks - signed (HMAC), idempotent, processed async</span></div>
+      <div class="toolbar"><button class="mini gold" onclick="newWebhookModal()">+ New webhook</button>
+      <span style="color:var(--muted);font-size:12.5px">Point GitHub / Stripe / Slack / any HTTP source here. Events flow through the job queue into a dataset.</span></div>
+      ${webhooks.length?webhooks.map(w=>`
+        <div class="row">
+          <div class="grow"><b>${esc(w.name)}</b> <span class="pill ${w.active?'on':'off'}">${w.provider}</span>
+            <div class="sub">${esc(w.url)}</div>
+            <div class="sub">${w.last_seen?'last delivery '+new Date(w.last_seen).toLocaleString():'no deliveries yet'}</div></div>
+          <button class="mini danger" onclick="delWebhook('${w.id}')">Delete</button>
+        </div>`).join(''):'<div class="empty-state">No webhooks yet.</div>'}
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+window.delWebhook = async (id) => { try{await api('/webhooks/'+id,{method:'DELETE'});toast('Webhook deleted');go('webhooks');}catch(e){toast(e.message);} };
+
+RENDER.alerts = async (v) => {
+  try{
+    const [{alerts},{metrics}]=await Promise.all([api('/automation/alerts'),api('/metrics')]);
+    window._metrics=metrics;
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// Alert rules - evaluated every 5 min by the scheduler</span></div>
+      <div class="toolbar"><button class="mini gold" onclick="newAlertModal()">+ New alert</button>
+      <span style="color:var(--muted);font-size:12.5px">Threshold or anomaly rules on saved metrics. Fires via email or outbound webhook.</span></div>
+      ${alerts.length?alerts.map(a=>`
+        <div class="row">
+          <div class="grow"><b>${esc(a.name)}</b> <span class="pill ${a.active?'on':'off'}">${a.channel}</span>
+            <div class="sub">metric: ${esc(a.metric_name||'-')} - rule: ${esc(JSON.stringify(a.rule))}</div>
+            <div class="sub">${a.last_fired?'last fired '+new Date(a.last_fired).toLocaleString():'never fired'}</div></div>
+          <button class="mini danger" onclick="delAlert('${a.id}')">Delete</button>
+        </div>`).join(''):'<div class="empty-state">No alerts yet.</div>'}
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+window.delAlert = async (id) => { try{await api('/automation/alerts/'+id,{method:'DELETE'});toast('Alert deleted');go('alerts');}catch(e){toast(e.message);} };
+
+RENDER.team = async (v) => {
+  try{
+    const {members}=await api('/team/members');
+    let auditHtml='';
+    if(state.role==='admin'){
+      try{const {entries}=await api('/team/audit');
+        auditHtml=`<div class="panel" style="margin-top:16px"><div class="panel-head"><span class="label">// Audit log - last 200 actions</span></div>
+          ${entries.slice(0,40).map(e=>`<div class="row"><div class="grow"><b>${esc(e.action)}</b> <span class="sub">${esc(e.target||'')}</span><div class="sub">${esc(e.actor_email||e.actor_kind)} - ${new Date(e.created_at).toLocaleString()}</div></div></div>`).join('')||'<div class="empty-state">No activity yet.</div>'}</div>`;
+      }catch(_){}
+    }
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// Members & roles (viewer / editor / admin)</span></div>
+      ${state.role==='admin'?`<div class="toolbar"><button class="mini gold" onclick="inviteModal()">+ Invite teammate</button></div>`:''}
+      ${members.map(m=>`<div class="row"><div class="grow"><b>${esc(m.name||m.email)}</b><div class="sub">${esc(m.email)}</div></div>
+        <span class="pill on">${esc(m.role)}</span></div>`).join('')}
+    </div>${auditHtml}`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+
+RENDER.api = async (v) => {
+  try{
+    const {keys}=await api('/apikeys');
+    v.innerHTML=`<div class="panel">
+      <div class="panel-head"><span class="label">// API keys - authenticate the public REST API via X-API-Key</span></div>
+      ${state.role==='admin'?`<div class="toolbar"><button class="mini gold" onclick="newKeyModal()">+ Create key</button></div>`:'<div class="sub" style="margin-bottom:14px">Admin role required to manage keys.</div>'}
+      ${keys.length?keys.map(k=>`<div class="row"><div class="grow"><b>${esc(k.name)}</b> <span class="pill ${k.revoked?'off':'on'}">${k.revoked?'revoked':k.scopes.join('+')}</span>
+        <div class="sub code" style="display:inline-block;margin-top:4px">${esc(k.prefix)}...</div>
+        <div class="sub">${k.last_used?'last used '+new Date(k.last_used).toLocaleString():'never used'}</div></div>
+        ${!k.revoked&&state.role==='admin'?`<button class="mini danger" onclick="revokeKey('${k.id}')">Revoke</button>`:''}</div>`).join(''):'<div class="empty-state">No API keys yet.</div>'}
+    </div>
+    <div class="panel" style="margin-top:16px"><div class="panel-head"><span class="label">// Example request</span></div>
+      <div class="code">curl ${location.origin}/api/v1/series?datasetId=${state.dsId||'1'} \\<br>&nbsp;&nbsp;-H "X-API-Key: pk_your_key_here"</div>
+      <p style="color:var(--muted);font-size:12.5px;margin-top:10px">Rate limited to 120 req/burst, refilling 2/sec per key. Endpoints: /series, /cohorts, /funnel, POST /events (write scope).</p>
+    </div>`;
+  }catch(e){v.innerHTML=errBox(e);}
+};
+window.revokeKey = async (id) => { try{await api('/apikeys/'+id+'/revoke',{method:'POST'});toast('Key revoked');go('api');}catch(e){toast(e.message);} };
+
+// ---- EXPORTS ----
+window.exportCSV = () => {
+  const rows=window._exportData||[]; if(!rows.length)return toast('Nothing to export');
+  const header='day,events,anomaly,score';
+  const body=rows.map(r=>`${(r.day||'').slice(0,10)},${r.n},${r.anomaly?1:0},${r.score??''}`).join('\n');
+  const blob=new Blob([header+'\n'+body],{type:'text/csv'});
+  const a=el('a',{href:URL.createObjectURL(blob),download:'polaris-export.csv'});a.click();toast('CSV exported');
+};
+window.exportPNG = () => {
+  const svg=$('#mainChart svg'); if(!svg)return toast('No chart');
+  const xml=new XMLSerializer().serializeToString(svg);
+  const img=new Image();
+  img.onload=()=>{const c=el('canvas',{width:1080,height:300});const ctx=c.getContext('2d');ctx.fillStyle='#0a0e1a';ctx.fillRect(0,0,1080,300);ctx.drawImage(img,0,0);const a=el('a',{href:c.toDataURL('image/png'),download:'polaris-chart.png'});a.click();toast('PNG exported');};
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
+};
+
+// ---- MODALS ----
+function openModal(html){$('#modal').innerHTML=html;$('#modalBg').classList.add('open');}
+function closeModal(){$('#modalBg').classList.remove('open');}
+$('#modalBg').onclick=e=>{if(e.target===$('#modalBg'))closeModal();};
+window.newDatasetModal=()=>openModal(`<h3>New dataset</h3><div class="field"><label>Name</label><input id="mName" placeholder="Product Events"/></div><div class="toolbar"><button class="mini gold" onclick="createDataset()">Create</button><button class="mini" onclick="closeModal()">Cancel</button></div>`);
+window.createDataset=async()=>{try{await api('/datasets',{method:'POST',body:JSON.stringify({name:$('#mName').value||'Dataset'})});closeModal();await loadDatasets();toast('Dataset created');go('overview');}catch(e){toast(e.message);}};
+window.newWebhookModal=()=>openModal(`<h3>New webhook</h3>
+  <div class="field"><label>Name</label><input id="wName" placeholder="GitHub events"/></div>
+  <div class="field"><label>Provider</label><select id="wProv"><option>generic</option><option>github</option><option>stripe</option><option>slack</option></select></div>
+  <div class="field"><label>Dataset</label><select id="wDs">${state.datasets.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div>
+  <div class="toolbar"><button class="mini gold" onclick="createWebhook()">Create</button><button class="mini" onclick="closeModal()">Cancel</button></div>`);
+window.createWebhook=async()=>{try{const r=await api('/webhooks',{method:'POST',body:JSON.stringify({name:$('#wName').value||'Webhook',provider:$('#wProv').value,datasetId:Number($('#wDs').value)})});openModal(`<h3>Webhook created</h3><p style="color:var(--muted);font-size:13px;margin-bottom:12px">Save this secret now - it is shown once.</p><div class="field"><label>Endpoint</label><div class="code">${esc(r.webhook.url)}</div></div><div class="field"><label>Signing secret</label><div class="code">${esc(r.secret)}</div></div><div class="toolbar"><button class="mini gold" onclick="closeModal();go('webhooks')">Done</button></div>`);}catch(e){toast(e.message);}};
+window.newAlertModal=()=>{const ms=window._metrics||[];if(!ms.length)return toast('Create a metric first (Query builder > Save)');openModal(`<h3>New alert</h3>
+  <div class="field"><label>Name</label><input id="aName" placeholder="Signups dropped"/></div>
+  <div class="field"><label>Metric</label><select id="aMetric">${ms.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>
+  <div class="field"><label>Condition</label><select id="aOp"><option value="lt">less than</option><option value="gt">greater than</option></select></div>
+  <div class="field"><label>Value</label><input id="aVal" type="number" value="10"/></div>
+  <div class="field"><label>Email</label><input id="aTarget" value="${esc(state.user?.email||'')}"/></div>
+  <div class="toolbar"><button class="mini gold" onclick="createAlert()">Create</button><button class="mini" onclick="closeModal()">Cancel</button></div>`);};
+window.createAlert=async()=>{try{await api('/automation/alerts',{method:'POST',body:JSON.stringify({name:$('#aName').value||'Alert',metricId:Number($('#aMetric').value),rule:{type:'threshold',op:$('#aOp').value,value:Number($('#aVal').value)},channel:'email',target:$('#aTarget').value})});closeModal();toast('Alert created');go('alerts');}catch(e){toast(e.message);}};
+window.inviteModal=()=>openModal(`<h3>Invite teammate</h3><div class="field"><label>Email</label><input id="iEmailInv" placeholder="teammate@company.com"/></div><div class="field"><label>Role</label><select id="iRoleInv"><option>editor</option><option>viewer</option><option>admin</option></select></div><div class="toolbar"><button class="mini gold" onclick="sendInvite()">Send invite</button><button class="mini" onclick="closeModal()">Cancel</button></div>`);
+window.sendInvite=async()=>{try{const r=await api('/team/invites',{method:'POST',body:JSON.stringify({email:$('#iEmailInv').value,role:$('#iRoleInv').value})});closeModal();openModal(`<h3>Invite ready</h3><p style="color:var(--muted);font-size:13px;margin-bottom:10px">Share this link (also emailed if SMTP is configured):</p><div class="code">${esc(r.inviteLink)}</div><div class="toolbar"><button class="mini gold" onclick="closeModal()">Done</button></div>`);}catch(e){toast(e.message);}};
+window.newKeyModal=()=>openModal(`<h3>Create API key</h3><div class="field"><label>Name</label><input id="kName" placeholder="Production"/></div><div class="field"><label>Scopes</label><select id="kScope"><option value="read">read</option><option value="read,write">read + write</option></select></div><div class="toolbar"><button class="mini gold" onclick="createKey()">Create</button><button class="mini" onclick="closeModal()">Cancel</button></div>`);
+window.createKey=async()=>{try{const r=await api('/apikeys',{method:'POST',body:JSON.stringify({name:$('#kName').value||'key',scopes:$('#kScope').value.split(',')})});openModal(`<h3>Key created</h3><p style="color:var(--muted);font-size:13px;margin-bottom:10px">Copy it now - it will not be shown again.</p><div class="code">${esc(r.key)}</div><div class="toolbar"><button class="mini gold" onclick="closeModal();go('api')">Done</button></div>`);}catch(e){toast(e.message);}};
+
+// ---- COMMAND PALETTE ----
+const CMDS=[
+  {label:'Go to Overview',k:'overview',act:()=>go('overview')},
+  {label:'Retention cohorts',k:'cohorts',act:()=>go('cohorts')},
+  {label:'Conversion funnel',k:'funnel',act:()=>go('funnel')},
+  {label:'Forecast',k:'forecast',act:()=>go('forecast')},
+  {label:'Query builder',k:'builder',act:()=>go('builder')},
+  {label:'Webhooks',k:'webhooks',act:()=>go('webhooks')},
+  {label:'Alerts',k:'alerts',act:()=>go('alerts')},
+  {label:'Team & members',k:'team',act:()=>go('team')},
+  {label:'API & keys',k:'api',act:()=>go('api')},
+  {label:'Export current chart as PNG',k:'png',act:()=>exportPNG()},
+  {label:'New dataset',k:'dataset',act:()=>newDatasetModal()},
+];
+let cmdkSel=0, cmdkFiltered=CMDS;
+function openCmdk(){$('#cmdk').classList.add('open');$('#cmdkInput').value='';cmdkFiltered=CMDS;cmdkSel=0;renderCmdk();$('#cmdkInput').focus();}
+function closeCmdk(){$('#cmdk').classList.remove('open');}
+function renderCmdk(){$('#cmdkList').innerHTML=cmdkFiltered.map((c,i)=>`<div class="cmdk-opt ${i===cmdkSel?'sel':''}" data-i="${i}">${esc(c.label)}<span class="k">${esc(c.k)}</span></div>`).join('')||'<div class="cmdk-opt">No matches</div>';
+  $('#cmdkList').querySelectorAll('.cmdk-opt').forEach(o=>o.onclick=()=>{const i=+o.dataset.i;if(cmdkFiltered[i]){cmdkFiltered[i].act();closeCmdk();}});}
+$('#cmdkInput').addEventListener('input',e=>{const q=e.target.value.toLowerCase();cmdkFiltered=CMDS.filter(c=>c.label.toLowerCase().includes(q)||c.k.includes(q));cmdkSel=0;renderCmdk();});
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#app').style.display!=='none'&&openCmdk();return;}
+  if(!$('#cmdk').classList.contains('open'))return;
+  if(e.key==='Escape')closeCmdk();
+  if(e.key==='ArrowDown'){e.preventDefault();cmdkSel=Math.min(cmdkSel+1,cmdkFiltered.length-1);renderCmdk();}
+  if(e.key==='ArrowUp'){e.preventDefault();cmdkSel=Math.max(cmdkSel-1,0);renderCmdk();}
+  if(e.key==='Enter'&&cmdkFiltered[cmdkSel]){cmdkFiltered[cmdkSel].act();closeCmdk();}
+});
+$('#cmdk').onclick=e=>{if(e.target===$('#cmdk'))closeCmdk();};
+
+// ---- INIT ----
+if(state.token) boot(); else { $('#auth').style.display='grid'; }
+</script>
+</body>
+</html>
